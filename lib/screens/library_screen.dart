@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -5,6 +6,7 @@ import '../data/score_repository.dart';
 import '../models/score.dart';
 import '../widgets/instrument_icon.dart';
 import 'editor_screen.dart';
+import 'record_melody_screen.dart';
 
 /// «Кабинет» — локальная библиотека партитур: список, создание, удаление.
 class LibraryScreen extends StatefulWidget {
@@ -33,13 +35,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _openEditor(Score score) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => EditorScreen(
-          scoreId: score.id,
-          repository: widget.repository,
-        ),
+        builder: (_) =>
+            EditorScreen(scoreId: score.id, repository: widget.repository),
       ),
     );
-    _reload(); // обновляем список (мог измениться заголовок/дата)
+    if (mounted) _reload(); // обновляем список (мог измениться заголовок/дата)
   }
 
   Future<void> _createScore() async {
@@ -84,10 +84,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
+  Future<void> _recordMelody() async {
+    final score = await Navigator.of(context).push<Score>(
+      MaterialPageRoute(builder: (_) => const RecordMelodyScreen()),
+    );
+    if (score == null || !mounted) return;
+    try {
+      await widget.repository.save(score);
+    } on Exception {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save the recorded score.')),
+      );
+      return;
+    }
+    if (mounted) await _openEditor(score);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ScoreFlow · Библиотека')),
+      appBar: AppBar(
+        title: const Text('ScoreFlow · Библиотека'),
+        actions: [
+          if (!kIsWeb &&
+              (defaultTargetPlatform == TargetPlatform.android ||
+                  defaultTargetPlatform == TargetPlatform.iOS))
+            IconButton(
+              icon: const Icon(Icons.mic),
+              tooltip: 'Record melody',
+              onPressed: _recordMelody,
+            ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createScore,
         icon: const Icon(Icons.add),

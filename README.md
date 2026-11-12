@@ -245,6 +245,21 @@ lib/
 
 ---
 
+## Record a melody
+
+On Android and iOS, tap the microphone in the library. Set the tempo and time
+signature, then follow the visual count-in and play or hum one note at a time.
+Tap **Stop and transcribe** to open the editable score. A take can run for up to
+30 seconds. Transcription runs on the device and rounds timing to an eighth-note
+grid.
+
+To build the fork's Android test APK for an ARM64 device, use Flutter 3.44.9
+and Android SDK platform 36. Run `npm run fetch-audio` to bundle the piano and
+drum samples, then run
+`flutter build apk --release --target-platform android-arm64`. The APK is
+`build/app/outputs/flutter-apk/app-release.apk`. The build uses debug signing
+and installs as **ScoreFlow Mic** alongside the upstream app.
+
 # 🚀 Getting Started
 
 ## Requirements
