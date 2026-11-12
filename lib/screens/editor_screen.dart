@@ -50,36 +50,36 @@ const List<String> _timeSignatures = [
 /// короткая -> невидимая). Расширяется добавлением значений в [BarlineType]
 /// (напр. реприза) без правки логики.
 const Map<BarlineType, String> _barlineLabels = {
-  BarlineType.normal: 'Обычная',
-  BarlineType.doubleBar: 'Двойная',
-  BarlineType.finalBar: 'Финальная',
-  BarlineType.dashed: 'Штриховая',
-  BarlineType.dotted: 'Пунктирная',
-  BarlineType.tick: 'Засечка',
-  BarlineType.short: 'Короткая',
-  BarlineType.invisible: 'Невидимая',
+  BarlineType.normal: 'Single',
+  BarlineType.doubleBar: 'Double',
+  BarlineType.finalBar: 'Final',
+  BarlineType.dashed: 'Dashed',
+  BarlineType.dotted: 'Dotted',
+  BarlineType.tick: 'Tick',
+  BarlineType.short: 'Short',
+  BarlineType.invisible: 'Invisible',
 };
 
 const Map<RepeatMark?, String> _repeatLabels = {
-  null: 'Нет',
-  RepeatMark.start: 'Начало |:',
-  RepeatMark.end: 'Конец :|',
-  RepeatMark.both: 'Обе :|:',
+  null: 'None',
+  RepeatMark.start: 'Start |:',
+  RepeatMark.end: 'End :|',
+  RepeatMark.both: 'Both :|:',
 };
 
 /// Вольты редактора: номер концовки -> подпись. Однотактовые концовки 1./2.
 /// (span=1) — типовой выбор; модель/движок поддерживают и многотактовые/
 /// произвольные списки, но UI держит простой профессиональный набор.
 const Map<int?, String> _voltaLabels = {
-  null: 'Нет',
-  1: '1-я концовка',
-  2: '2-я концовка',
+  null: 'None',
+  1: 'First ending',
+  2: 'Second ending',
 };
 
 /// Навигационные символы редактора: значение -> подпись. Порядок = порядок в
 /// выпадающем списке (якоря, затем переходы). null — снять символ.
 const Map<NavigationMark?, String> _navLabels = {
-  null: 'Нет',
+  null: 'None',
   NavigationMark.segno: 'Segno 𝄋',
   NavigationMark.coda: 'Coda 𝄌',
   NavigationMark.toCoda: 'To Coda',
@@ -965,11 +965,11 @@ class _EditorScreenState extends State<EditorScreen> {
   /// Мини-лист выбора соотношения tuplet. Возвращает (actual, normal) или null.
   Future<(int, int)?> _pickTupletRatio() async {
     const presets = <(String, int, int)>[
-      ('Триоль', 3, 2),
-      ('Квинтоль', 5, 4),
-      ('Секстоль', 6, 4),
-      ('Септоль', 7, 4),
-      ('Дуоль', 2, 3),
+      ('Triplet', 3, 2),
+      ('Quintuplet', 5, 4),
+      ('Sextuplet', 6, 4),
+      ('Septuplet', 7, 4),
+      ('Duplet', 2, 3),
     ];
     return showModalBottomSheet<(int, int)>(
       context: context,
@@ -982,7 +982,7 @@ class _EditorScreenState extends State<EditorScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                'Tuplet (нестандартная ритмика)',
+                'Tuplet',
                 style: Theme.of(ctx).textTheme.titleMedium,
               ),
             ),
@@ -1017,7 +1017,7 @@ class _EditorScreenState extends State<EditorScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Произвольный размер'),
+          title: const Text('Custom time signature'),
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1025,7 +1025,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Доли'),
+                    const Text('Beats'),
                     DropdownButton<int>(
                       value: beats,
                       isExpanded: true,
@@ -1046,7 +1046,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Длительность'),
+                    const Text('Beat unit'),
                     DropdownButton<int>(
                       value: beatValue,
                       isExpanded: true,
@@ -1068,7 +1068,7 @@ class _EditorScreenState extends State<EditorScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Отмена'),
+              child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, '$beats/$beatValue'),
@@ -1178,12 +1178,12 @@ class _EditorScreenState extends State<EditorScreen> {
     final title = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Переименовать'),
+        title: const Text('Rename'),
         content: TextField(controller: ctrl, autofocus: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text),
@@ -1216,13 +1216,13 @@ class _EditorScreenState extends State<EditorScreen> {
 
       final pages = (res as num?)?.toInt() ?? 0;
       if (pages <= 0) {
-        throw Exception('не удалось сверстать страницы');
+        throw Exception('Could not lay out the pages');
       }
 
       await engine.printPage();
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Не удалось напечатать: $e')),
+        SnackBar(content: Text('Could not print. $e')),
       );
     }
   }
@@ -1435,7 +1435,7 @@ class _EditorScreenState extends State<EditorScreen> {
     return showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Темп (BPM)'),
+        title: const Text('Tempo (BPM)'),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
@@ -1445,14 +1445,14 @@ class _EditorScreenState extends State<EditorScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () {
               final v = int.tryParse(controller.text.trim());
               Navigator.pop(ctx, (v != null && v >= 20 && v <= 400) ? v : null);
             },
-            child: const Text('ОК'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -1560,7 +1560,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
                       child: Text(
-                        'Такт ${m + 1}',
+                        'Measure ${m + 1}',
                         style: Theme.of(ctx).textTheme.titleMedium,
                       ),
                     ),
@@ -1570,11 +1570,11 @@ class _EditorScreenState extends State<EditorScreen> {
                     if (isPiano)
                       group(
                         atStart
-                            ? 'Тональность'
-                            : 'Тональность · действует $effKey',
+                            ? 'Key signature'
+                            : 'Key signature · $effKey',
                         [
                           if (!atStart)
-                            chip('Без смены', ownKey == null, () {
+                            chip('No change', ownKey == null, () {
                               _setMeasureKey(null);
                               setSheet(() {});
                             }),
@@ -1587,9 +1587,9 @@ class _EditorScreenState extends State<EditorScreen> {
                       ),
 
                     // Размер: пресеты + «Другой…» (или текущий нестандартный).
-                    group(atStart ? 'Размер' : 'Размер · действует $effTs', [
+                    group(atStart ? 'Time signature' : 'Time signature · $effTs', [
                       if (!atStart)
-                        chip('Без смены', ownTs == null, () {
+                        chip('No change', ownTs == null, () {
                           _setMeasureTimeSignature(null);
                           setSheet(() {});
                         }),
@@ -1599,7 +1599,7 @@ class _EditorScreenState extends State<EditorScreen> {
                           setSheet(() {});
                         }),
                       chip(
-                        isCustomTs ? ownTs : 'Другой…',
+                        isCustomTs ? ownTs : 'Custom…',
                         isCustomTs,
                         () async {
                           final custom = await _pickCustomTimeSignature(
@@ -1612,7 +1612,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ]),
 
                     // Тактовая черта (правая граница такта).
-                    group('Тактовая черта', [
+                    group('Barline', [
                       for (final t in BarlineType.values)
                         chip(_barlineLabels[t]!, curBar == t, () {
                           _setMeasureBarline(t);
@@ -1621,7 +1621,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ]),
 
                     // Повтор (реприза) на границе такта.
-                    group('Повтор', [
+                    group('Repeat', [
                       for (final entry in _repeatLabels.entries)
                         chip(entry.value, curRepeat == entry.key, () {
                           _setMeasureRepeat(entry.key);
@@ -1630,7 +1630,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ]),
 
                     // Вольта (1-я/2-я концовка), начинается с этого такта.
-                    group('Вольта', [
+                    group('Repeat endings', [
                       for (final entry in _voltaLabels.entries)
                         chip(entry.value, curVolta == entry.key, () {
                           _setMeasureVolta(entry.key);
@@ -1639,7 +1639,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ]),
 
                     // Навигация (Segno/Coda/D.C./D.S./Fine/To Coda …).
-                    group('Навигация', [
+                    group('Navigation', [
                       for (final entry in _navLabels.entries)
                         chip(entry.value, curNav == entry.key, () {
                           _setNavigation(entry.key);
@@ -1650,7 +1650,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     // Смена темпа «(нота) = N» на позиции курсора. «Нет» —
                     // только не в начале (начальный темп снять нельзя, он
                     // живёт в слайдере). Нота в заголовке — гравированная.
-                    group('Темп ', titleSuffix: Row(
+                    group('Tempo ', titleSuffix: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Transform.translate(
@@ -1669,7 +1669,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       ],
                     ), [
                       if (!atStart)
-                        chip('Нет', curTempo == null, () {
+                        chip('None', curTempo == null, () {
                           _setTempoMark(null);
                           setSheet(() {});
                         }),
@@ -1679,7 +1679,7 @@ class _EditorScreenState extends State<EditorScreen> {
                           setSheet(() {});
                         }),
                       chip(
-                        isCustomTempo ? '$curTempo' : 'Другое…',
+                        isCustomTempo ? '$curTempo' : 'Custom…',
                         isCustomTempo,
                         () async {
                           final custom = await _pickCustomBpm(curTempo ?? 120);
@@ -1696,14 +1696,14 @@ class _EditorScreenState extends State<EditorScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
                       child: Text(
-                        'Воспроизведение',
+                        'Playback',
                         style: Theme.of(ctx).textTheme.titleSmall,
                       ),
                     ),
                     ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                       leading: const Icon(Icons.speed),
-                      title: const Text('Начальный темп'),
+                      title: const Text('Starting tempo'),
                       trailing: Text(
                         '${score.tempo} BPM',
                         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -1726,7 +1726,7 @@ class _EditorScreenState extends State<EditorScreen> {
                           horizontal: 8,
                         ),
                         secondary: const Icon(Icons.piano),
-                        title: const Text('Демпфер-педаль (sustain)'),
+                        title: const Text('Sustain pedal'),
                         value: _sustain,
                         onChanged: (_) {
                           _toggleSustain();
@@ -1741,7 +1741,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                       leading: const Icon(Icons.playlist_add),
-                      title: const Text('Добавить такт'),
+                      title: const Text('Add measure'),
                       onTap: () {
                         Navigator.pop(ctx);
                         _addMeasure();
@@ -1750,7 +1750,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                       leading: const Icon(Icons.picture_as_pdf_outlined),
-                      title: const Text('Экспорт в PDF'),
+                      title: const Text('Export as PDF'),
                       onTap: () {
                         Navigator.pop(ctx);
                         _exportPdf();
@@ -1802,7 +1802,7 @@ class _EditorScreenState extends State<EditorScreen> {
               // информация видна всегда, но не занимает отдельную строку в
               // рабочей зоне (больше места партитуре).
               Text(
-                'Такт ${_cursor.measure + 1}/${score.measures.length}',
+                'Measure ${_cursor.measure + 1}/${score.measures.length}',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -1841,7 +1841,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             const CircularProgressIndicator(),
                             const SizedBox(height: 16),
                             Text(
-                              'Готовим партитуру…',
+                              'Preparing score…',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: Theme.of(
@@ -2086,7 +2086,7 @@ class _EditorPanelState extends State<_EditorPanel> {
           duration: 'q',
           dots: 1,
           selected: widget.dots > 0,
-          tooltip: 'Нота с точкой',
+          tooltip: 'Dotted note',
           onTap: () => widget.onDots(widget.dots > 0 ? 0 : 1),
         ),
       ],
@@ -2183,10 +2183,10 @@ class _EditorPanelState extends State<_EditorPanel> {
   // подсказке; «галочку выбора» скрываем, чтобы сегменты не расширялись.
   Widget _modeSelector(BuildContext context) {
     const labels = <_CtxMode, String>{
-      _CtxMode.edit: 'Правка',
-      _CtxMode.pitch: 'Знак',
-      _CtxMode.dyn: 'Динамика',
-      _CtxMode.art: 'Штрихи',
+      _CtxMode.edit: 'Edit',
+      _CtxMode.pitch: 'Accidentals',
+      _CtxMode.dyn: 'Dynamics',
+      _CtxMode.art: 'Articulations',
     };
     return SegmentedButton<_CtxMode>(
       showSelectedIcon: false,
@@ -2242,7 +2242,7 @@ class _EditorPanelState extends State<_EditorPanel> {
           onSelectionChanged: (s) => widget.onSwitchVoice(s.first),
         ),
       IconButton(
-        tooltip: 'Назад',
+        tooltip: 'Previous note',
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
         constraints: tight,
@@ -2250,7 +2250,7 @@ class _EditorPanelState extends State<_EditorPanel> {
         onPressed: () => widget.onMoveNote(-1),
       ),
       IconButton(
-        tooltip: 'Вперёд',
+        tooltip: 'Next note',
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
         constraints: tight,
@@ -2259,7 +2259,7 @@ class _EditorPanelState extends State<_EditorPanel> {
       ),
       // Аккорд-режим: залитый фон при активности — постоянный индикатор.
       IconButton(
-        tooltip: widget.stackMode ? 'Аккорд-режим включён' : 'Аккорд-режим',
+        tooltip: widget.stackMode ? 'Chord mode on' : 'Chord mode',
         isSelected: widget.stackMode,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
@@ -2276,7 +2276,7 @@ class _EditorPanelState extends State<_EditorPanel> {
       ),
       // Tie — лига ДЛИТЕЛЬНОСТИ (тумблер на ноте под курсором).
       IconButton(
-        tooltip: 'Лига длительности (Tie)',
+        tooltip: 'Tie',
         isSelected: widget.tieOnCursor,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
@@ -2295,8 +2295,8 @@ class _EditorPanelState extends State<_EditorPanel> {
       // Slur — лига ФРАЗИРОВКИ (авто по выделению: якорь -> курсор).
       IconButton(
         tooltip: widget.selArmed
-            ? 'Лига фразировки: выберите второй конец'
-            : 'Лига фразировки (Slur)',
+            ? 'Select the end of the slur'
+            : 'Slur',
         isSelected: widget.selArmed,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
@@ -2311,10 +2311,10 @@ class _EditorPanelState extends State<_EditorPanel> {
       // Tuplet — нестандартная ритмика (операция над выделением).
       IconButton(
         tooltip: widget.tupletOnCursor
-            ? 'Убрать tuplet'
+            ? 'Remove tuplet'
             : (widget.selArmed
-                  ? 'Tuplet: выберите второй конец'
-                  : 'Tuplet (триоль/квинтоль/…)'),
+                  ? 'Select the end of the tuplet'
+                  : 'Tuplet'),
         isSelected: widget.tupletOnCursor,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
@@ -2336,10 +2336,10 @@ class _EditorPanelState extends State<_EditorPanel> {
       // второй конец, как slur). Подсвечена, когда курсор внутри вилки.
       IconButton(
         tooltip: widget.hairpinOnCursor
-            ? 'Убрать вилку'
+            ? 'Remove hairpin'
             : (widget.selArmed
-                  ? 'Крещендо: выберите второй конец'
-                  : 'Крещендо (<)'),
+                  ? 'Select the end of the crescendo'
+                  : 'Crescendo (<)'),
         isSelected: widget.hairpinOnCursor,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
@@ -2363,10 +2363,10 @@ class _EditorPanelState extends State<_EditorPanel> {
       // Diminuendo (>) — вилка спада. Поведение симметрично крещендо.
       IconButton(
         tooltip: widget.hairpinOnCursor
-            ? 'Убрать вилку'
+            ? 'Remove hairpin'
             : (widget.selArmed
-                  ? 'Диминуэндо: выберите второй конец'
-                  : 'Диминуэндо (>)'),
+                  ? 'Select the end of the diminuendo'
+                  : 'Diminuendo (>)'),
         isSelected: widget.hairpinOnCursor,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
@@ -2392,7 +2392,7 @@ class _EditorPanelState extends State<_EditorPanel> {
 
   // Пауза — закреплена справа (нужна в любом режиме при вводе ритма).
   Widget _restButton(BuildContext context) => IconButton.filledTonal(
-    tooltip: 'Пауза',
+    tooltip: 'Rest',
     visualDensity: VisualDensity.compact,
     padding: EdgeInsets.zero,
     constraints: const BoxConstraints(minWidth: 34, minHeight: 38),
@@ -2405,7 +2405,7 @@ class _EditorPanelState extends State<_EditorPanel> {
   Widget _deleteButton(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return IconButton.filledTonal(
-      tooltip: 'Стереть',
+      tooltip: 'Erase',
       visualDensity: VisualDensity.compact,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 34, minHeight: 38),
@@ -2423,12 +2423,12 @@ class _EditorPanelState extends State<_EditorPanel> {
   /// строки не нужен — категорию называет сегмент-переключатель («Знак»).
   List<Widget> _accidentalItems(BuildContext context) {
     const items = <(Accidental, String, String)>[
-      (Accidental.none, '♮?', 'Без знака (по тональности)'),
-      (Accidental.natural, '♮', 'Бекар'),
-      (Accidental.sharp, '♯', 'Диез'),
-      (Accidental.flat, '♭', 'Бемоль'),
-      (Accidental.doubleSharp, '𝄪', 'Дубль-диез'),
-      (Accidental.doubleFlat, '𝄫', 'Дубль-бемоль'),
+      (Accidental.none, '♮?', 'Use key signature'),
+      (Accidental.natural, '♮', 'Natural'),
+      (Accidental.sharp, '♯', 'Sharp'),
+      (Accidental.flat, '♭', 'Flat'),
+      (Accidental.doubleSharp, '𝄪', 'Double sharp'),
+      (Accidental.doubleFlat, '𝄫', 'Double flat'),
     ];
     final scheme = Theme.of(context).colorScheme;
     return [
@@ -2473,11 +2473,11 @@ class _EditorPanelState extends State<_EditorPanel> {
   /// называет сегмент-переключатель.
   List<Widget> _articulationItems(BuildContext context) {
     const items = <(Articulation, String, String)>[
-      (Articulation.staccato, '𝅭', 'Стаккато'),
-      (Articulation.staccatissimo, '𝆓', 'Стаккатиссимо'),
-      (Articulation.accent, '>', 'Акцент'),
-      (Articulation.marcato, '^', 'Маркато'),
-      (Articulation.tenuto, '–', 'Тенуто'),
+      (Articulation.staccato, '𝅭', 'Staccato'),
+      (Articulation.staccatissimo, '𝆓', 'Staccatissimo'),
+      (Articulation.accent, '>', 'Accent'),
+      (Articulation.marcato, '^', 'Marcato'),
+      (Articulation.tenuto, '–', 'Tenuto'),
     ];
     final scheme = Theme.of(context).colorScheme;
     return [
@@ -2807,19 +2807,19 @@ class _PlaybackBar extends StatelessWidget {
             child: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
           ),
           IconButton(
-            tooltip: 'Отменить',
+            tooltip: 'Undo',
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.undo),
             onPressed: canUndo ? onUndo : null,
           ),
           IconButton(
-            tooltip: 'Вернуть',
+            tooltip: 'Redo',
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.redo),
             onPressed: canRedo ? onRedo : null,
           ),
           IconButton(
-            tooltip: 'Метроном',
+            tooltip: 'Metronome',
             isSelected: metronomeOn,
             visualDensity: VisualDensity.compact,
             icon: MetronomeIcon(
@@ -2831,8 +2831,8 @@ class _PlaybackBar extends StatelessWidget {
           ),
           IconButton(
             tooltip: followOn
-                ? 'Следовать за воспроизведением: вкл.'
-                : 'Следовать за воспроизведением: выкл.',
+                ? 'Follow playback on'
+                : 'Follow playback off',
             isSelected: followOn,
             visualDensity: VisualDensity.compact,
             icon: Icon(followOn ? Icons.swap_vert : Icons.swap_vert_outlined),
@@ -2865,7 +2865,7 @@ class _PlaybackBar extends StatelessWidget {
             onPressed: onTempoTap,
           ),
           IconButton(
-            tooltip: 'Ещё',
+            tooltip: 'More',
             icon: const Icon(Icons.more_horiz),
             onPressed: onOpenMore,
           ),

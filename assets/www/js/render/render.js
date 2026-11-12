@@ -39,7 +39,7 @@ function clearCanvas() {
 // печатную ширину A4); иначе берётся ширина контейнера.
 export function render(score, forcedWidth) {
     if (typeof Vex === 'undefined' || !Vex.Flow) {
-        showError('Нотный движок не загрузился (assets/www/js/vexflow.js).');
+        showError('Could not load the notation engine.');
         return;
     }
     const VF = Vex.Flow;

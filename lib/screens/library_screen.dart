@@ -64,16 +64,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Удалить партитуру?'),
-        content: Text('«${score.title}» будет удалена безвозвратно.'),
+        title: const Text('Delete score?'),
+        content: Text('“${score.title}” will be permanently deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Удалить'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -105,7 +105,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ScoreFlow · Библиотека'),
+        title: const Text('ScoreFlow · Library'),
         actions: [
           if (!kIsWeb &&
               (defaultTargetPlatform == TargetPlatform.android ||
@@ -120,7 +120,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createScore,
         icon: const Icon(Icons.add),
-        label: const Text('Новая'),
+        label: const Text('New score'),
       ),
       body: FutureBuilder<List<Score>>(
         future: _future,
@@ -175,7 +175,8 @@ class _ScoreCard extends StatelessWidget {
         ),
         subtitle: Text(
           '${score.instrument.label} · ${score.timeSignature.vex} · '
-          '${score.measures.length} тактов',
+          '${score.measures.length} '
+          '${score.measures.length == 1 ? 'measure' : 'measures'}',
         ),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
@@ -198,9 +199,9 @@ class _EmptyState extends StatelessWidget {
           Icon(Icons.library_music_outlined,
               size: 64, color: Theme.of(context).colorScheme.outline),
           const SizedBox(height: 16),
-          const Text('Пока нет партитур'),
+          const Text('No scores yet'),
           const SizedBox(height: 4),
-          Text('Нажмите «Новая», чтобы создать первую',
+          Text('Tap New score to create one.',
               style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
@@ -262,12 +263,12 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
     return ts.beats >= 1 && ts.beats <= 32;
   }
 
-  String _presetLabel(TimeSignature? p) => p == null ? 'Свой' : p.vex;
+  String _presetLabel(TimeSignature? p) => p == null ? 'Custom' : p.vex;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Новая партитура'),
+      title: const Text('New score'),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -279,12 +280,12 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
               controller: _titleCtrl,
               autofocus: true,
               decoration: const InputDecoration(
-                labelText: 'Название',
-                hintText: 'Например: Этюд №1',
+                labelText: 'Title',
+                hintText: 'e.g. Etude No. 1',
               ),
             ),
             const SizedBox(height: 16),
-            Text('Инструмент', style: Theme.of(context).textTheme.labelLarge),
+            Text('Instrument', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -299,7 +300,7 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
               ],
             ),
             const SizedBox(height: 20),
-            Text('Размер такта',
+            Text('Time signature',
                 style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Wrap(
@@ -326,7 +327,7 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
                       textAlign: TextAlign.center,
                       onChanged: (_) => setState(() {}),
                       decoration: const InputDecoration(
-                        labelText: 'Долей',
+                        labelText: 'Beats',
                         isDense: true,
                         border: OutlineInputBorder(),
                       ),
@@ -342,7 +343,7 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
                       initialValue: _customBeatValue,
                       isDense: true,
                       decoration: const InputDecoration(
-                        labelText: 'Длит.',
+                        labelText: 'Beat unit',
                         isDense: true,
                         border: OutlineInputBorder(),
                       ),
@@ -360,7 +361,7 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    'Введите число долей от 1 до 32',
+                    'Enter 1 to 32 beats',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                       fontSize: 12,
@@ -375,7 +376,7 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Отмена'),
+          child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: _isValid
@@ -384,7 +385,7 @@ class _NewScoreDialogState extends State<_NewScoreDialog> {
                     _NewScoreSpec(_titleCtrl.text, _instrument, _timeSignature),
                   )
               : null,
-          child: const Text('Создать'),
+          child: const Text('Create'),
         ),
       ],
     );

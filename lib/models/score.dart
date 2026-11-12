@@ -22,8 +22,8 @@ enum InstrumentType {
       };
 
   String get label => switch (this) {
-        InstrumentType.piano => 'Фортепиано',
-        InstrumentType.drums => 'Ударная установка',
+        InstrumentType.piano => 'Piano',
+        InstrumentType.drums => 'Drum kit',
       };
 }
 
@@ -1220,7 +1220,7 @@ class Score {
   }) =>
       Score(
         id: id,
-        title: title.trim().isEmpty ? 'Без названия' : title.trim(),
+        title: title.trim().isEmpty ? 'Untitled' : title.trim(),
         instrument: instrument,
         timeSignature: timeSignature,
         createdAt: now,
@@ -1262,7 +1262,7 @@ class Score {
 
   factory Score.fromJson(Map<String, dynamic> j) => Score(
         id: j['id'] as String,
-        title: j['title'] as String? ?? 'Без названия',
+        title: j['title'] as String? ?? 'Untitled',
         composer: j['composer'] as String? ?? '',
         instrument: InstrumentType.fromId(j['instrument'] as String?),
         keySignature: j['keySignature'] as String? ?? 'C',

@@ -142,7 +142,7 @@ export const Playback = {
         // never block transport on sample download (that caused ~1 min delay).
         await AudioEngine.resume();
         const ctx = AudioEngine.ensure();
-        if (!ctx) { showError('Web Audio недоступен в этом WebView.'); return; }
+        if (!ctx) { showError('Audio playback is unavailable in this WebView.'); return; }
         if (ctx.state !== 'running') {
             await AudioEngine.resume();
         }

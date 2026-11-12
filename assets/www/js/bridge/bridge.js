@@ -34,7 +34,7 @@ window.ScoreFlow = {
                 window.flutter_inappwebview.callHandler('onRendered');
             }
         } catch (e) {
-            showError('Ошибка разбора партитуры: ' + e.message);
+            showError('Could not read the score. ' + e.message);
         }
     },
 
@@ -47,7 +47,7 @@ window.ScoreFlow = {
             const score = JSON.parse(json);
             return renderPrintPages(score);
         } catch (e) {
-            showError('Ошибка вёрстки печати: ' + e.message);
+            showError('Could not lay out the print pages. ' + e.message);
             return 0;
         }
     },
@@ -116,7 +116,7 @@ window.ScoreFlow = {
         const VF = Vex.Flow;
         const cont = el('notation-container');
         const usableW = Math.max(320, cont.clientWidth) - 16; // 2*margin
-        const cases = [['16-е', '16', 16], ['32-е', '32', 32], ['64-е', '64', 64]];
+        const cases = [['16th', '16', 16], ['32nd', '32', 32], ['64th', '64', 64]];
         const head = 24 + 36 + 46; // ключ + размер + тональность (первый такт)
         const avail = Math.max(40, usableW - head); // доступная зона нот
         const rows = cases.map(function (c) {
