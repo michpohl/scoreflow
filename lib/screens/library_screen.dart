@@ -112,7 +112,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   defaultTargetPlatform == TargetPlatform.iOS))
             IconButton(
               icon: const Icon(Icons.mic),
-              tooltip: 'Record melody',
+              tooltip: 'Record music',
               onPressed: _recordMelody,
             ),
         ],

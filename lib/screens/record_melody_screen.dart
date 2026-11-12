@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -114,19 +115,27 @@ class _RecordMelodyScreenState extends State<RecordMelodyScreen> {
       await _streamDone?.future.timeout(const Duration(seconds: 2));
       if (_streamError case final error?) throw error;
       final bytes = _samples.takeBytes();
-      final notes = await compute(transcribePcm16, bytes);
+      // Skip the quiet count-in while keeping enough audio before the
+      // downbeat for the model to detect the first attack.
+      const leadInSeconds = 0.25;
+      final countInSamples =
+          ((_countInSeconds - leadInSeconds) * melodySampleRate).round();
+      final skippedSamples = math.min(countInSamples, bytes.length ~/ 2);
+      final notes = await transcribePcm16(
+        Uint8List.sublistView(bytes, skippedSamples * 2),
+      );
       if (!mounted) return;
       if (notes.isEmpty) {
-        _reset('No clear notes found. Try a short melody in a quiet room.');
+        _reset('No clear notes found. Try playing in a quiet room.');
         return;
       }
       final title = _title.text.trim();
       final score = quantizeMelody(
         notes,
-        title: title.isEmpty ? 'Recorded melody' : title,
+        title: title.isEmpty ? 'Recorded music' : title,
         bpm: _bpm,
         timeSignature: _meter,
-        countInSeconds: _countInSeconds,
+        countInSeconds: _countInSeconds - skippedSamples / melodySampleRate,
       );
       Navigator.of(context).pop(score);
     } on StateError {
@@ -187,7 +196,7 @@ class _RecordMelodyScreenState extends State<RecordMelodyScreen> {
     final busy = _phase == _Phase.processing || _phase == _Phase.starting;
     final status = switch (_phase) {
       _Phase.ready =>
-        'Play or hum one note at a time. Start after the count-in.',
+        'Play notes or chords on one instrument. Start after the count-in.',
       _Phase.starting => 'Opening microphone…',
       _Phase.counting => 'Count-in · $_beat of ${_meter.beats}',
       _Phase.recording => 'Recording · Beat $_beat of ${_meter.beats}',
@@ -197,7 +206,7 @@ class _RecordMelodyScreenState extends State<RecordMelodyScreen> {
     return PopScope(
       canPop: ready,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Record melody')),
+        appBar: AppBar(title: const Text('Record music')),
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.all(24),

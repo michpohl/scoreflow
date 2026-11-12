@@ -3,7 +3,7 @@
 // выходе. Ничего не знает о DOM, WebView, AudioContext, render и SVG.
 import { durationBeats } from '../domain/durations.js';
 import { tupletScaleOf } from '../domain/tuplets.js';
-import { sameKeys } from '../domain/notes.js';
+import { tiePitchPairs } from '../domain/notes.js';
 import { resolveMidi } from '../domain/pitch.js';
 import { keySignatureAlterations, effectiveKeys } from '../domain/keysig.js';
 import { velocityTimeline, velocityAt } from '../domain/dynamics.js';
@@ -33,19 +33,67 @@ function mergeTies(events) {
     const out = [];
     for (const v in byVoice) {
         const list = byVoice[v];
-        let k = 0;
-        while (k < list.length) {
-            const head = list[k];
-            let j = k;
-            while (list[j].tieToNext && !list[j].rest && j + 1 < list.length) {
-                const nxt = list[j + 1];
-                if (nxt.rest || !sameKeys(head.keys, nxt.keys)) break;
-                head.durationBeats += nxt.durationBeats;
-                head.coveredNoteIds.push(nxt.noteId);
-                j++;
+        if (!list.some(event => event.tieToNext || event.tiedPitchIndices?.length)) {
+            for (const event of list) out.push(event);
+            continue;
+        }
+        const attacks = [];
+        let previous = null;
+        let previousHeads = [];
+        for (const event of list) {
+            const heads = [];
+            const started = [];
+            // Explicit ties may only join adjacent note slices. Keep the
+            // original whole-chord rule for scores created by older editors.
+            const gap = previous && Array.isArray(previous.tiedPitchIndices) &&
+                Math.abs(previous.startBeat + previous.durationBeats - event.startBeat) > 1e-6;
+            if (!gap) {
+                for (const [first, last] of tiePitchPairs(previous, event)) {
+                    const head = previousHeads[first];
+                    head.durationBeats += event.durationBeats;
+                    head.coveredNoteIds.push(event.noteId);
+                    heads[last] = head;
+                }
             }
-            out.push(head);
-            k = j + 1;
+            if (event.rest || event.keys.length === 0) {
+                attacks.push(event);
+            } else {
+                for (let i = 0; i < event.keys.length; i++) {
+                    if (heads[i]) continue;
+                    const head = {
+                        ...event,
+                        keys: [event.keys[i]],
+                        midis: event.midis.slice(i, i + 1),
+                        coveredNoteIds: [],
+                    };
+                    heads[i] = head;
+                    started.push(head);
+                }
+                if (started.length) attacks.push(started);
+            }
+            previous = event;
+            previousHeads = heads;
+        }
+
+        // Preserve ordinary chord events when all heads share one attack and
+        // release. Only split chords whose pitches follow different tie chains.
+        for (const attack of attacks) {
+            if (!Array.isArray(attack)) {
+                out.push(attack);
+                continue;
+            }
+            const groups = new Map();
+            for (const head of attack) {
+                const key = JSON.stringify([head.durationBeats, head.coveredNoteIds]);
+                const group = groups.get(key);
+                if (group) {
+                    group.keys.push(...head.keys);
+                    group.midis.push(...head.midis);
+                } else {
+                    groups.set(key, head);
+                }
+            }
+            out.push(...groups.values());
         }
     }
     return out;
@@ -173,6 +221,9 @@ export function compilePlayback(payload, baseTempoOverride) {
                     // Tie (лига длительности): объединяется в одно
                     // звучащее событие на merge-проходе ниже.
                     tieToNext: !!n.tieToNext,
+                    ...(Array.isArray(n.tiedPitchIndices)
+                        ? { tiedPitchIndices: n.tiedPitchIndices }
+                        : {}),
                     coveredNoteIds: [], // ноты-продолжения цепочки лиг
                     // Громкость (0..1) разрешена ОДИН РАЗ из активного оттенка
                     // голоса на эту долю (mf, если оттенков нет). При tie-merge

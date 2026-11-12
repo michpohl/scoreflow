@@ -6,6 +6,8 @@
 // событиях роняло ноту в начале повторяемой секции и затягивало лигу на
 // пропускаемую вольту.
 import { compilePlayback } from '../../assets/www/js/playback/compiler.js';
+import { drawTiesAndSlurs } from '../../assets/www/js/render/ligatures.js';
+import { state } from '../../assets/www/js/utils/state.js';
 
 let failed = 0;
 function eq(name, got, want) {
@@ -89,6 +91,54 @@ console.log('tie — chain within a measure merges to one event:');
     eq('chained ties collapse to single sustained note', treble(comp), [
         { id: '0:treble:0', b: 0, dur: 4, k: 'c/4' },
     ]);
+}
+
+console.log('per-pitch ties preserve independent attacks and releases:');
+{
+    const score = piano([
+        { treble: [
+            { keys: ['c/4', 'e/4'], duration: 'h', tiedPitchIndices: [1] },
+            { keys: ['e/4', 'g/4'], duration: 'h', tiedPitchIndices: [0] },
+        ] },
+        { treble: [{ keys: ['e/4', 'a/4'], duration: 'h' }] },
+    ]);
+    const comp = compilePlayback(score);
+    eq('only E sustains across the three different chords', treble(comp), [
+        { id: '0:treble:0', b: 0, dur: 2, k: 'c/4' },
+        { id: '0:treble:0', b: 0, dur: 6, k: 'e/4' },
+        { id: '0:treble:1', b: 2, dur: 2, k: 'g/4' },
+        { id: '1:treble:0', b: 4, dur: 2, k: 'a/4' },
+    ]);
+    eq('sustained note retains all linked notation IDs',
+        comp.events.find(e => e.midis[0] === 64).coveredNoteIds,
+        ['0:treble:1', '1:treble:0']);
+
+    const ties = [];
+    const VF = { StaveTie: class {
+        constructor(options) { this.options = options; }
+        setContext() { return this; }
+        draw() { ties.push(this.options); }
+    } };
+    state.noteObjs = { '0:treble:0': 'first', '0:treble:1': 'second', '1:treble:0': 'third' };
+    drawTiesAndSlurs(VF, {}, score, [{ row: 0 }, { row: 1 }]);
+    eq('renderer matches head indices and splits a tie across rows', ties, [
+        { first_note: 'first', last_note: 'second', first_indices: [1], last_indices: [0] },
+        { first_note: 'second', last_note: null, first_indices: [0], last_indices: [0] },
+        { first_note: null, last_note: 'third', first_indices: [0], last_indices: [0] },
+    ]);
+}
+
+console.log('per-pitch ties account for a carried accidental:');
+{
+    const comp = compilePlayback(piano([
+        { treble: [
+            { keys: ['f#/4'], duration: 'h', tiedPitchIndices: [0] },
+            { keys: ['f/4', 'a/4'], duration: 'h' },
+        ] },
+    ]));
+    eq('F-sharp sustains when the next notehead inherits its sharp',
+        comp.events.filter(e => !e.rest).map(e => [e.midis, e.durationBeats]),
+        [[[66], 4], [[69], 2]]);
 }
 
 if (failed > 0) {

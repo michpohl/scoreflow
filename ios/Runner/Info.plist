@@ -33,7 +33,7 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>Record a melody and turn it into editable sheet music.</string>
+		<string>Record music and turn it into editable sheet music.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>

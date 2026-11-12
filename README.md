@@ -245,13 +245,16 @@ lib/
 
 ---
 
-## Record a melody
+## Record music
 
 On Android and iOS, tap the microphone in the library. Set the tempo and time
-signature, then follow the visual count-in and play or hum one note at a time.
+signature, then play notes or chords on one instrument after the visual count-in.
 Tap **Stop and transcribe** to open the editable score. A take can run for up to
-30 seconds. Transcription runs on the device and rounds timing to an eighth-note
-grid.
+30 seconds. Spotify's Basic Pitch runs offline on the device and ScoreFlow
+rounds timing to an eighth-note grid.
+
+The transcription assets are bundled with the app. To regenerate them, run
+`npm ci` and `npm run build-transcription`.
 
 To build the fork's Android test APK for an ARM64 device, use Flutter 3.44.9
 and Android SDK platform 36. Run `npm run fetch-audio` to bundle the piano and

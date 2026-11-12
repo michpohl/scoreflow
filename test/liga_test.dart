@@ -5,6 +5,38 @@ import 'package:scoreflow/models/reflow.dart';
 import 'package:scoreflow/models/score.dart';
 
 void main() {
+  test('per-pitch ties survive score JSON and undo copies', () {
+    final note = MusicNote.fromKeys(
+      keys: ['c/4', 'e/4', 'g/4'],
+      duration: 'q',
+      tiedPitchIndices: [0, 2],
+    );
+    final restored = MusicNote.fromJson(
+      jsonDecode(jsonEncode(note.toJson())) as Map<String, dynamic>,
+    );
+    expect(restored.tieToNext, isTrue);
+    expect(restored.toRenderJson()['tiedPitchIndices'], [0, 2]);
+    expect(restored.toRenderJson().containsKey('tieToNext'), isFalse);
+    final copy = restored.copy()..tieToNext = false;
+    expect(copy.tiedPitchIndices, isNull);
+    expect(copy.tieToNext, isFalse);
+    expect(restored.tiedPitchIndices, [0, 2]);
+  });
+
+  test('editing a chord remaps tied indices to unchanged pitches', () {
+    final note = MusicNote.fromKeys(
+      keys: ['c/4', 'e/4'],
+      duration: 'q',
+      tiedPitchIndices: [1],
+    );
+    note.keys = ['b/3', 'c/4', 'e/4'];
+    expect(note.tiedPitchIndices, [2]);
+    note.keys = ['b/3', 'c/4'];
+    expect(note.tieToNext, isFalse);
+    note.tieToNext = true;
+    expect(note.toRenderJson()['tieToNext'], isTrue);
+  });
+
   group('Модель лиг — раздельные сущности Tie/Slur', () {
     test('по умолчанию все флаги выключены', () {
       final n = MusicNote.fromKeys(keys: const ['c/4'], duration: 'q');

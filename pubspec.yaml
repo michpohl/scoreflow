@@ -2,7 +2,7 @@ name: scoreflow
 description: "High-performance mobile music notation editor and player."
 publish_to: 'none'
 
-version: 0.5.0+1
+version: 0.5.0+2
 
 environment:
   sdk: '>=3.12.2 <4.0.0'
@@ -44,6 +44,7 @@ flutter:
     - assets/www/js/render/
     - assets/www/js/print/
     - assets/www/js/bridge/
+    - assets/www/transcription/
     # Сэмплы концертного рояля (Salamander, оффлайн). Файлы кладёт
     # tools/fetch_salamander.mjs; manifest.json присутствует всегда.
     - assets/www/piano/

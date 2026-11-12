@@ -747,7 +747,8 @@ class MusicNote {
   int dots;
   bool rest;
   bool auto;
-  bool tieToNext;
+  bool _tieToNext;
+  List<int>? _tiedPitchIndices;
   bool slurStart;
   bool slurStop;
   Tuplet? tuplet;
@@ -765,13 +766,28 @@ class MusicNote {
     this.dots = 0,
     this.rest = false,
     this.auto = false,
-    this.tieToNext = false,
+    this._tieToNext = false,
+    List<int>? tiedPitchIndices,
     this.slurStart = false,
     this.slurStop = false,
     this.tuplet,
     this.tupletStart = false,
     List<Articulation>? articulations,
-  }) : articulations = articulations ?? [];
+  })  : _tiedPitchIndices = tiedPitchIndices == null
+            ? null
+            : List.unmodifiable(tiedPitchIndices
+                .where((index) => index >= 0 && index < pitches.length)
+                .toSet()),
+        articulations = articulations ?? [];
+
+  /// Outgoing tied noteheads by index, or null for legacy whole-chord ties.
+  List<int>? get tiedPitchIndices => _tiedPitchIndices;
+
+  bool get tieToNext => _tiedPitchIndices?.isNotEmpty ?? _tieToNext;
+  set tieToNext(bool value) {
+    _tieToNext = value;
+    _tiedPitchIndices = null;
+  }
 
   /// Множитель реального времени ноты от tuplet-группы (1.0 вне группы).
   double get tupletScale => tuplet?.scale ?? 1.0;
@@ -780,8 +796,20 @@ class MusicNote {
   /// над каноническим [pitches] — для рендера/движка и string-based кода
   /// (ударные/тесты). Сеттер пересобирает [pitches] из ключей (миграция).
   List<String> get keys => pitches.map((p) => p.vexKey).toList();
-  set keys(List<String> v) =>
-      pitches = v.map(Pitch.fromVexKey).toList();
+  set keys(List<String> v) {
+    final updated = v.map(Pitch.fromVexKey).toList();
+    final indices = _tiedPitchIndices;
+    if (indices != null) {
+      _tiedPitchIndices = List.unmodifiable(
+        indices
+            .where((index) => index < pitches.length)
+            .map((index) => updated.indexOf(pitches[index]))
+            .where((index) => index >= 0)
+            .toSet(),
+      );
+    }
+    pitches = updated;
+  }
 
   /// Конструктор из ключей VexFlow (string-based путь: ударные, тесты,
   /// reflow). Головки разбираются в [Pitch] через [Pitch.fromVexKey].
@@ -792,6 +820,7 @@ class MusicNote {
     bool rest = false,
     bool auto = false,
     bool tieToNext = false,
+    List<int>? tiedPitchIndices,
     bool slurStart = false,
     bool slurStop = false,
     Tuplet? tuplet,
@@ -805,6 +834,7 @@ class MusicNote {
         rest: rest,
         auto: auto,
         tieToNext: tieToNext,
+        tiedPitchIndices: tiedPitchIndices,
         slurStart: slurStart,
         slurStop: slurStop,
         tuplet: tuplet,
@@ -818,7 +848,8 @@ class MusicNote {
         dots: dots,
         rest: rest,
         auto: auto,
-        tieToNext: tieToNext,
+        tieToNext: _tieToNext,
+        tiedPitchIndices: _tiedPitchIndices,
         slurStart: slurStart,
         slurStop: slurStop,
         tuplet: tuplet == null
@@ -834,7 +865,8 @@ class MusicNote {
         if (dots > 0) 'dots': dots,
         'rest': rest,
         // Лиги сериализуются только когда выставлены — JSON остаётся лаконичным.
-        if (tieToNext) 'tieToNext': true,
+        if (_tiedPitchIndices == null && _tieToNext) 'tieToNext': true,
+        if (_tiedPitchIndices != null) 'tiedPitchIndices': _tiedPitchIndices,
         if (slurStart) 'slurStart': true,
         if (slurStop) 'slurStop': true,
         if (tuplet != null) 'tuplet': tuplet!.toJson(),
@@ -872,6 +904,8 @@ class MusicNote {
         dots: j['dots'] as int? ?? 0,
         rest: j['rest'] as bool? ?? false,
         tieToNext: j['tieToNext'] as bool? ?? false,
+        tiedPitchIndices:
+            (j['tiedPitchIndices'] as List?)?.whereType<int>().toList(),
         slurStart: j['slurStart'] as bool? ?? false,
         slurStop: j['slurStop'] as bool? ?? false,
         tuplet: j['tuplet'] == null

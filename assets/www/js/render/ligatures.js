@@ -7,7 +7,7 @@
 // VexFlow. Печатный проход лиг (drawPrintTiesAndSlurs) принадлежит print-слою
 // и остаётся в index.html. Зависимостей от render-слоя нет (цикла нет).
 import { state } from '../utils/state.js';
-import { voiceListOf, nextRealNote, sameKeys } from '../domain/notes.js';
+import { voiceListOf, notationTies } from '../domain/notes.js';
 
 // Рисует [fn] внутри того же горизонтального трансформа сжатия [tr],
 // что и ноты такта (translate+scaleX). Иначе лига считалась бы по
@@ -36,11 +36,11 @@ function sameTr(a, b) {
 // Соседние такты одной строки — целая (трансформ лишь если у обоих
 // одинаковый). Через перенос строки — две частичные, КАЖДАЯ в трансформе
 // своего такта (иначе хвост у сжатого такта уедет за край строки).
-function drawTie(VF, ctx, a, mA, rowA, trA, b, mB, rowB, trB, idx) {
+function drawTie(VF, ctx, a, mA, rowA, trA, b, mB, rowB, trB, first, last) {
     const full = function (tr) {
         withTransform(ctx, tr, function () {
             new VF.StaveTie({ first_note: a, last_note: b,
-                first_indices: idx, last_indices: idx })
+                first_indices: first, last_indices: last })
                 .setContext(ctx).draw();
         });
     };
@@ -52,12 +52,12 @@ function drawTie(VF, ctx, a, mA, rowA, trA, b, mB, rowB, trB, idx) {
         } else {
             withTransform(ctx, trA, function () {
                 new VF.StaveTie({ first_note: a, last_note: null,
-                    first_indices: idx, last_indices: idx })
+                    first_indices: first, last_indices: first })
                     .setContext(ctx).draw();
             });
             withTransform(ctx, trB, function () {
                 new VF.StaveTie({ first_note: null, last_note: b,
-                    first_indices: idx, last_indices: idx })
+                    first_indices: last, last_indices: last })
                     .setContext(ctx).draw();
             });
         }
@@ -92,25 +92,14 @@ export function drawTiesAndSlurs(VF, ctx, score, geom) {
     const rowOf = function (mi) { return geom[mi] ? geom[mi].row : 0; };
     const idOf = function (mi, v, ni) { return mi + ':' + v + ':' + ni; };
 
-    // --- Tie: попарная связь note -> следующая нота той же высоты ---
-    for (let vi = 0; vi < voices.length; vi++) {
-        const v = voices[vi];
-        for (let mi = 0; mi < measures.length; mi++) {
-            const notes = (measures[mi] && measures[mi][v]) || [];
-            for (let ni = 0; ni < notes.length; ni++) {
-                const n = notes[ni];
-                if (!n || !n.tieToNext || n.rest) continue;
-                const p = nextRealNote(measures, v, mi, ni);
-                // Лига длительности валидна лишь между нотами одной высоты.
-                if (!p || p.note.rest || !sameKeys(n.keys, p.note.keys)) continue;
-                const idA = idOf(mi, v, ni), idB = idOf(p.mi, v, p.ni);
-                const a = state.noteObjs[idA], b = state.noteObjs[idB];
-                if (!a || !b) continue;
-                const idx = n.keys.map(function (_, k) { return k; });
-                drawTie(VF, ctx, a, mi, rowOf(mi), state.noteTransform[idA],
-                    b, p.mi, rowOf(p.mi), state.noteTransform[idB], idx);
-            }
-        }
+    for (const { voiceId, from, to, pairs } of notationTies(score)) {
+        const idA = idOf(from.mi, voiceId, from.ni);
+        const idB = idOf(to.mi, voiceId, to.ni);
+        const a = state.noteObjs[idA], b = state.noteObjs[idB];
+        if (!a || !b) continue;
+        drawTie(VF, ctx, a, from.mi, rowOf(from.mi), state.noteTransform[idA],
+            b, to.mi, rowOf(to.mi), state.noteTransform[idB],
+            pairs.map(([first]) => first), pairs.map(([, last]) => last));
     }
 
     // --- Slur: стек start/stop в пределах голоса по порядку ---

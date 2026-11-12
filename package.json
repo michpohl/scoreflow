@@ -4,9 +4,16 @@
   "description": "ScoreFlow build tooling",
   "scripts": {
     "fetch-audio": "node tools/fetch_audio_assets.mjs",
-    "link-web-assets": "node tools/link_web_assets.mjs"
+    "link-web-assets": "node tools/link_web_assets.mjs",
+    "build-transcription": "node tools/build_transcription.mjs"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@spotify/basic-pitch": "1.0.1",
+    "@tensorflow/tfjs": "3.21.0",
+    "@tensorflow/tfjs-backend-wasm": "3.21.0",
+    "esbuild": "0.28.2"
   }
 }

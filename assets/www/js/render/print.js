@@ -20,7 +20,7 @@
 // VexFlow без пересчёта координат.
 import { el } from '../utils/dom.js';
 import { buildVoice, beamGroups, buildTuplets, measureMinWidth } from './layout.js';
-import { voiceListOf, nextRealNote, sameKeys } from '../domain/notes.js';
+import { voiceListOf, notationTies } from '../domain/notes.js';
 import { effectiveKeys, cancelKeyFor } from '../domain/keysig.js';
 import { effectiveTimeSignatures } from '../domain/timesig.js';
 import { effectiveBarlines } from '../domain/barlines.js';
@@ -713,18 +713,18 @@ function drawPrintTiesAndSlurs(VF, score, registry) {
     const voices = voiceListOf(score);
     const objOf = function (mi, v, ni) { return registry[mi + ':' + v + ':' + ni]; };
 
-    function tie(a, b, idx) {
+    function tie(a, b, first, last) {
         try {
             if (a.sys === b.sys) {
                 new VF.StaveTie({ first_note: a.sn, last_note: b.sn,
-                    first_indices: idx, last_indices: idx })
+                    first_indices: first, last_indices: last })
                     .setContext(a.ctx).draw();
             } else {
                 new VF.StaveTie({ first_note: a.sn, last_note: null,
-                    first_indices: idx, last_indices: idx })
+                    first_indices: first, last_indices: first })
                     .setContext(a.ctx).draw();
                 new VF.StaveTie({ first_note: null, last_note: b.sn,
-                    first_indices: idx, last_indices: idx })
+                    first_indices: last, last_indices: last })
                     .setContext(b.ctx).draw();
             }
         } catch (e) { console.error('print tie failed:', e); }
@@ -742,19 +742,10 @@ function drawPrintTiesAndSlurs(VF, score, registry) {
         } catch (e) { console.error('print slur failed:', e); }
     }
 
-    for (let vi = 0; vi < voices.length; vi++) {
-        const v = voices[vi];
-        for (let mi = 0; mi < measures.length; mi++) {
-            const notes = (measures[mi] && measures[mi][v]) || [];
-            for (let ni = 0; ni < notes.length; ni++) {
-                const n = notes[ni];
-                if (!n || !n.tieToNext || n.rest) continue;
-                const p = nextRealNote(measures, v, mi, ni);
-                if (!p || p.note.rest || !sameKeys(n.keys, p.note.keys)) continue;
-                const a = objOf(mi, v, ni), b = objOf(p.mi, v, p.ni);
-                if (a && b) tie(a, b, n.keys.map(function (_, k) { return k; }));
-            }
-        }
+    for (const { voiceId, from, to, pairs } of notationTies(score)) {
+        const a = objOf(from.mi, voiceId, from.ni);
+        const b = objOf(to.mi, voiceId, to.ni);
+        if (a && b) tie(a, b, pairs.map(([first]) => first), pairs.map(([, last]) => last));
     }
     for (let vi = 0; vi < voices.length; vi++) {
         const v = voices[vi];
